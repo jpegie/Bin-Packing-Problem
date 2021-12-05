@@ -2,11 +2,11 @@
 using System.IO;
 using System;
 
-namespace BPP
+namespace BinPP //bin packing problem
 {
-    class BPP_program
+    class BinPP_program
     {
-        class Item
+        public class Item
         {
             int index;
             double weight;
@@ -24,7 +24,7 @@ namespace BPP
                 get { return weight; }
             }
         }
-        class Bin
+        public class Bin
         {
             int total_capacity = 0;
             double current_capacity = 0;
@@ -60,7 +60,7 @@ namespace BPP
                 return total_capacity - current_capacity;
             }
         }
-        class Packing
+        public class Packing
         {
             List<List<Item>> items_combs = new List<List<Item>>();
             List<Item> items = new List<Item>();
@@ -155,8 +155,20 @@ namespace BPP
             }
         }
 
-        void TestGenerator()
+        static public void TestGenerator(ref List<Item> items, ref int bin_capacity, ref int items_amnt)
         {
+            items_amnt = new Random().Next();
+            bin_capacity = new Random().Next();
+            items = new List<Item>();
+            for(int i=0;i<items_amnt ; ++i)
+                items.Add(new Item(i, new Random().Next()));
+            Console.WriteLine("Сгенерированные входные данные: ");
+            Console.Write($"Кол-во предметов: {items_amnt}");
+            for(int i=0;i<items_amnt ; ++i)
+            {
+                Console.Write($"[{items[i].Index}] {items[i].Weight} - ");
+            }
+            Console.Write($"Вместимость контейнера: {bin_capacity}");
 
         }
 
@@ -164,41 +176,54 @@ namespace BPP
         {
             List<Bin> bins = new List<Bin>();       int bin_capacity = 0;
             List<Item> items = new List<Item>();    int items_amnt = 0;
-            Packing packing; 
+            Packing packing_type;
+            bool generate_again = true;
+            while (generate_again) {
+                Console.Write("Сгенерировать входные данные автоматически (y - да/n - нет, ввести вручную) : ");
+                if (Console.ReadLine() == "y")
+                {
+                    TestGenerator(ref items, ref bin_capacity, ref items_amnt);
+                }
+                else
+                {
+                    Console.Write("Кол-во предметов: "); int.TryParse(Console.ReadLine(), out items_amnt);
 
-            Console.Write("Кол-во предметов: "); int.TryParse(Console.ReadLine(), out items_amnt);
-            
-            for (int i = 0; i < items_amnt; ++i)
-            {
-                double weight = 0;
-                Console.Write($"Вес {i + 1} предмета: "); double.TryParse(Console.ReadLine(), out weight);
-                items.Add(new Item(i, weight));
+                    for (int i = 0; i < items_amnt; ++i)
+                    {
+                        double weight = 0;
+                        Console.Write($"Вес {i + 1} предмета: "); double.TryParse(Console.ReadLine(), out weight);
+                        items.Add(new Item(i, weight));
+                    }
+
+                    Console.Write("Размерность контейнера: "); int.TryParse(Console.ReadLine(), out bin_capacity);
+                }
+                Console.Write("Сгенерировать/ввести заново (y/n)? : ");
+                if (Console.ReadLine() == "n") generate_again = false;
             }
 
-            Console.Write("Размерность контейнера: "); int.TryParse(Console.ReadLine(), out bin_capacity);
             Console.Write(
                         "Выберите тип упаковки:\n" + 
                         "1. Перебор всех возможных комбинаций предметов для нахождеия лучшего случая\n" + 
                         "2. FF\n" + 
                         "3. FFS\n"
                          );
-            packing = new Packing(items, bin_capacity);
+            packing_type = new Packing(items, bin_capacity);
             int pack_id; int.TryParse(Console.ReadLine(), out pack_id);
             switch (pack_id)
             {
                 case (1):
                 {
-                        bins = packing.BruteForce();
+                        bins = packing_type.BruteForce();
                         break;
                 }
                 case (2):
                 {
-                        bins = packing.FF();
+                        bins = packing_type.FF();
                         break;
                 }
                 case (3):
                 {
-                        bins = packing.FFS();
+                        bins = packing_type.FFS();
                         break;
                 }
             }
