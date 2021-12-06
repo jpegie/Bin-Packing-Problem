@@ -89,6 +89,7 @@ namespace BinPP //bin packing problem
             }
             public (int, int, List<Item>) GetRow(int ID)
             {
+                connection.Open();
                 int AMOUNT = 0, CAPACITY = 0;
                 string ITEMS_IN = "";
                 List<Item> ITEMS_OUT = new List<Item>();
@@ -114,6 +115,7 @@ namespace BinPP //bin packing problem
                     ITEMS_OUT.Add(new Item(int.Parse(ITEM[0]), int.Parse(ITEM[1])));
                 }
                 reader.Close();
+                connection.Close();
                 return (AMOUNT, CAPACITY, ITEMS_OUT);
             }
         }
@@ -296,7 +298,7 @@ namespace BinPP //bin packing problem
         static void Main()
         {
             DataBase db = new DataBase("Cases");
-            List<Bin> bins = new List<Bin>();       int bin_capacity = 0;
+           /* List<Bin> bins = new List<Bin>();       int bin_capacity = 0;
             List<Item> items = new List<Item>();    int items_amnt = 0;
             Packing packing_type;
             bool generate_again = true;
@@ -357,8 +359,13 @@ namespace BinPP //bin packing problem
                     Console.WriteLine($"[{item.Index}] : {item.Weight}");
                 Console.WriteLine(new String('-', 25));
             }
-            Console.WriteLine($"Затраченное время (мс): {packing_type.GetTakenTime().ElapsedMilliseconds}");
-            db.AddCase(items_amnt, bin_capacity, items);
+            Console.WriteLine($"Затраченное время (мс): {packing_type.GetTakenTime().ElapsedMilliseconds}");*/
+            (int, int, List<Item>) a = db.GetRow(11);
+            int amount = a.Item1;
+            int capacity = a.Item2;
+
+
+
         }
     }
 }
