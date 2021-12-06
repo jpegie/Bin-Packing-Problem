@@ -8,6 +8,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C4F40521-63A9-4BC6-84AE-9ABB3FCED116}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		..\db_input.db = ..\db_input.db
 	EndProjectSection
 EndProject
 Global
