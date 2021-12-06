@@ -1,12 +1,88 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
-using System;
+using Microsoft.Data.Sqlite;
 
 namespace BinPP //bin packing problem
 {
     class BinPP_program
     {
+        class DataBase
+        {
+            string table_name;
+            static string connection_string = @"Data Source=C:\git\bin_packing_problem\db_input.db";
+            static string add_query="", find_max_query="";
+            static SqliteConnection connection = new SqliteConnection(connection_string);
+            static SqliteCommand command = connection.CreateCommand();
+            public DataBase(string table_name)
+            {
+                this.table_name = table_name;
+                add_query = $"INSERT INTO {table_name} (ID,AMOUNT,CAPACITY,ITEMS) Values({1},{2},{3},{4})";
+                find_max_query = $"SELECT MAX({1}) FROM {table_name}";
+                SqliteCommand command = connection.CreateCommand();
+
+            }
+            private int GetMaxID()
+            {
+                connection.Open();
+                command.CommandText = String.Format(find_max_query, "ID");
+                int max = -999;
+                try
+                {
+                    max = int.Parse(command.ExecuteScalar().ToString());
+                }
+                catch (Exception) {}
+                connection.Close();
+                return max;
+            }
+            public void AddCase(int AMOUNT, int CAPACITY, List<Item>ITEMS, int ID = -999)
+            {
+                connection.Open();
+                ID = GetMaxID() + 1;
+                command.CommandText = String.Format(add_query, ID, AMOUNT, CAPACITY, ItemsConverter(ITEMS));
+                try
+                {
+                    command.ExecuteNonQuery();
+                    Console.WriteLine("Строка в БД добавлена!");
+                }
+                catch (Exception) {}
+                connection.Close();
+                
+                using (var connection = new SqliteConnection())
+                {
+                    connection.Open();
+                    SqliteCommand command = connection.CreateCommand();
+                    int max_id; string query;
+
+                    query = "SELECT MAX(ID) from Cases";
+                    command.CommandText = query;
+
+                    try
+                    {
+                        max_id = int.Parse(command.ExecuteScalar().ToString());
+                        Console.WriteLine($"Max ID = {max_id}");
+                    }
+                    catch (Exception) { }
+
+                    query = "INSERT INTO Cases (ID,AMOUNT,CAPACITY,ITEMS) Values(1,15,15,15)";
+                    command.CommandText = query;
+                    try
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    catch (Exception) { }
+                    connection.Close();
+                }
+            }
+            private string ItemsConverter(List<Item> ITEMS)
+            {
+                string result="";
+                foreach(Item itm in ITEMS)
+                    result += $"{itm.Index}/{itm.Weight};";
+                return result;
+            }
+        }
+        
         public class Item
         {
             int index;
@@ -184,6 +260,7 @@ namespace BinPP //bin packing problem
 
         static void Main()
         {
+            DataBase db = new DataBase("Cases");
             List<Bin> bins = new List<Bin>();       int bin_capacity = 0;
             List<Item> items = new List<Item>();    int items_amnt = 0;
             Packing packing_type;
