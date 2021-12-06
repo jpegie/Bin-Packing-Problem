@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Diagnostics;
 using System;
 
 namespace BinPP //bin packing problem
@@ -9,8 +10,8 @@ namespace BinPP //bin packing problem
         public class Item
         {
             int index;
-            double weight;
-            public Item(int index, double weight)
+            int weight;
+            public Item(int index, int weight)
             {
                 this.index = index;
                 this.weight = weight;
@@ -19,7 +20,7 @@ namespace BinPP //bin packing problem
             {
                 get { return index; }
             }
-            public double Weight
+            public int Weight
             {
                 get { return weight; }
             }
@@ -40,24 +41,16 @@ namespace BinPP //bin packing problem
             }
             public bool AddItem(Item item)
             {
-                if(FreeCapacity() < item.Weight)
+                if(FreeCapacity < item.Weight)
                     return false;
                 items.Add(item);
                 current_capacity += item.Weight;
                 return true;
             }
-            /*public int TotalCapacity
-            {
-                get { return total_capacity; }
-            }*/
 
-            /*public double CurrentCapacity()
+            private double FreeCapacity 
             {
-                return current_capacity;
-            }*/
-            private double FreeCapacity()
-            {
-                return total_capacity - current_capacity;
+                get { return total_capacity - current_capacity; }
             }
         }
         public class Packing
@@ -65,6 +58,7 @@ namespace BinPP //bin packing problem
             List<List<Item>> items_combs = new List<List<Item>>();
             List<Item> items = new List<Item>();
             List<Bin> bins = new List<Bin>();
+            Stopwatch taken_time = new Stopwatch();
             int bin_capacity = 0;
             public Packing(List<Item> items, int bin_capacity)
             {
@@ -80,29 +74,36 @@ namespace BinPP //bin packing problem
                 //применить FF
                 //сохранить информацию о заполненных контейнерах и саму i-ую комбинацию
                 //найти лучшую комбинацию
-
-                int best_bin = 0;
-
-                List<Bin> best_bin_pack = new List<Bin>();
-                List<List<Bin>> bins_combs = new List<List<Bin>>();
-
+                taken_time.Start();
+                if (items.Count > 10) {
+                    Console.BackgroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Метод перебора завершает свою работу за конечное время только с кол-вом предметов не более 10!");
+                    Console.BackgroundColor = ConsoleColor.Black;
+                    return bins;
+                }
+                int best_bin = 0; //индекс комбинации с минимальным кол-вом использованных контейнеров
+                List<List<Bin>> bins_combs = new List<List<Bin>>(); //все возможные комбиеации заполнения контейнеров
                 PermuteItems(items, 0);
-
                 for(int i=0;i<items_combs.Count ;++i)
                 {
                     items = items_combs[i];
-                    bins.Clear();
-                    FF();
-                    bins_combs.Add(bins);
+                    bins_combs.Add(FF());
                 }
                 for (int i = 1; i < bins_combs.Count; ++i)
                     if (bins_combs[i].Count < bins_combs[best_bin].Count)
                         best_bin = i;
+                taken_time.Stop();
                 return bins_combs[best_bin];
+            }
+            public Stopwatch GetTakenTime()
+            {
+                Stopwatch s = taken_time;
+                taken_time.Reset();
+                return s;
+                //Console.WriteLine($"Затраченное время (мс, кол-во тиков): {taken_time.ElapsedMilliseconds}, {taken_time.ElapsedTicks}");
             }
             private void PermuteItems(List<Item> perm, int start)
             {
-
                 if (start == items.Count)
                 {
                     items_combs.Add(new List<Item>(perm));
@@ -123,9 +124,12 @@ namespace BinPP //bin packing problem
                 items_list[item1_i] = items_list[item2_i];
                 items_list[item2_i] = buff;
             }
+            
             //"первый подходящий"
             public List<Bin> FF()
             {
+                taken_time.Start();
+                bins.Clear();
                 bins.Add(new Bin(bin_capacity)); //добавляем первый контейнер
                 bool found_fit_bin = false;
                 for(int i=0;i<items.Count ; ++i)
@@ -144,32 +148,38 @@ namespace BinPP //bin packing problem
                     }
 
                 }
+                taken_time.Stop();
                 return bins;
             }
 
             //"первый подходящий" только в отсортированном списке предметов
+
             public List<Bin> FFS()
             {
+                taken_time.Start();
                 items.Sort((x, y) => x.Weight.CompareTo(y.Weight));
+                taken_time.Stop();
                 return FF();
             }
         }
 
         static public void TestGenerator(ref List<Item> items, ref int bin_capacity, ref int items_amnt)
         {
-            items_amnt = new Random().Next();
-            bin_capacity = new Random().Next();
+            Console.Write("генерирую");
+            items_amnt = new Random().Next(1,100);
             items = new List<Item>();
             for(int i=0;i<items_amnt ; ++i)
-                items.Add(new Item(i, new Random().Next()));
-            Console.WriteLine("Сгенерированные входные данные: ");
-            Console.Write($"Кол-во предметов: {items_amnt}");
+                items.Add(new Item(i, new Random().Next(1, 100)));
+            bin_capacity = items.Max(x => x.Weight) + new Random().Next(1, 100); //вместивмость контейнера делаем больше, чем максимальный вес предмета, чтобы избежать невместимость
+            Console.WriteLine("Сгенерированные входные данные:");
+            Console.WriteLine($"Кол-во предметов: {items_amnt}");
+            int cols_in_output = 5;
             for(int i=0;i<items_amnt ; ++i)
             {
-                Console.Write($"[{items[i].Index}] {items[i].Weight} - ");
+                Console.Write($"[{items[i].Index}] {items[i].Weight}\t\t");
+                if (i % cols_in_output == 0 && i !=0) Console.WriteLine();
             }
-            Console.Write($"Вместимость контейнера: {bin_capacity}");
-
+            Console.WriteLine($"\nВместимость контейнера: {bin_capacity}");
         }
 
         static void Main()
@@ -186,12 +196,12 @@ namespace BinPP //bin packing problem
                 }
                 else
                 {
+                    items.Clear();
+                    int weight = 0;
                     Console.Write("Кол-во предметов: "); int.TryParse(Console.ReadLine(), out items_amnt);
-
                     for (int i = 0; i < items_amnt; ++i)
                     {
-                        double weight = 0;
-                        Console.Write($"Вес {i + 1} предмета: "); double.TryParse(Console.ReadLine(), out weight);
+                        Console.Write($"Вес {i + 1} предмета: "); int.TryParse(Console.ReadLine(), out weight);
                         items.Add(new Item(i, weight));
                     }
 
@@ -203,7 +213,7 @@ namespace BinPP //bin packing problem
 
             Console.Write(
                         "Выберите тип упаковки:\n" + 
-                        "1. Перебор всех возможных комбинаций предметов для нахождеия лучшего случая\n" + 
+                        "1. Перебор всех возможных комбинаций предметов для нахождеия лучшего случая (с использованием FF)\n" + 
                         "2. FF\n" + 
                         "3. FFS\n"
                          );
@@ -227,7 +237,6 @@ namespace BinPP //bin packing problem
                         break;
                 }
             }
-
             Console.WriteLine($"Кол-во использованных контейнеров: {bins.Count}");
             for (int i = 0; i < bins.Count; ++i)
             {
@@ -236,6 +245,7 @@ namespace BinPP //bin packing problem
                     Console.WriteLine($"[{item.Index}] : {item.Weight}");
                 Console.WriteLine(new String('-', 25));
             }
+            Console.WriteLine($"Затраченное время (мс): {packing_type.GetTakenTime().ElapsedMilliseconds}");
         }
     }
 }
