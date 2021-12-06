@@ -9,24 +9,25 @@ namespace BinPP //bin packing problem
     {
         class DataBase
         {
-            string table_name;
             static string connection_string = @"Data Source=C:\git\bin_packing_problem\db_input.db";
-            static string add_query="", find_max_query="";
-            static SqliteConnection connection = new SqliteConnection(connection_string);
-            static SqliteCommand command = connection.CreateCommand();
+            string table_name = "", add_query = "", find_max_query = "", get_query = "";
+            SqliteConnection connection = new SqliteConnection(connection_string);
+            SqliteCommand command;
+            SqliteDataReader reader;
             public DataBase(string table_name)
             {
                 this.table_name = table_name;
-                add_query = $"INSERT INTO {table_name} (ID,AMOUNT,CAPACITY,ITEMS) Values({1},{2},{3},{4})";
-                find_max_query = $"SELECT MAX({1}) FROM {table_name}";
-                SqliteCommand command = connection.CreateCommand();
+                add_query = "INSERT INTO "  + table_name + "(ID,AMOUNT,CAPACITY,ITEMS) Values ({0},{1},{2},{3})";
+                find_max_query = "SELECT MAX({0}) FROM " + table_name;
+                get_query = "SELECT * from " + table_name;
+                command = connection.CreateCommand();
 
             }
             private int GetMaxID()
             {
                 connection.Open();
                 command.CommandText = String.Format(find_max_query, "ID");
-                int max = -999;
+                int max = 0;
                 try
                 {
                     max = int.Parse(command.ExecuteScalar().ToString());
@@ -35,11 +36,15 @@ namespace BinPP //bin packing problem
                 connection.Close();
                 return max;
             }
-            public void AddCase(int AMOUNT, int CAPACITY, List<Item>ITEMS, int ID = -999)
+            public void AddCase(int AMOUNT, int CAPACITY, List<Item>ITEMS)
             {
+                int ID = GetMaxID() + 1;
                 connection.Open();
-                ID = GetMaxID() + 1;
+                Console.WriteLine($"ID = {ID}");
+                SqliteCommand prepared_items = new SqliteCommand();
                 command.CommandText = String.Format(add_query, ID, AMOUNT, CAPACITY, ItemsConverter(ITEMS));
+                command.Prepare();
+                Console.WriteLine(String.Format(add_query, ID, AMOUNT, CAPACITY, ItemsConverter(ITEMS)));
                 try
                 {
                     command.ExecuteNonQuery();
@@ -76,10 +81,40 @@ namespace BinPP //bin packing problem
             }
             private string ItemsConverter(List<Item> ITEMS)
             {
-                string result="";
+                string result="'";
                 foreach(Item itm in ITEMS)
-                    result += $"{itm.Index}/{itm.Weight};";
+                    result += $"{itm.Index}/{itm.Weight} ";
+                result += "'";
                 return result;
+            }
+            public (int, int, List<Item>) GetRow(int ID)
+            {
+                int AMOUNT = 0, CAPACITY = 0;
+                string ITEMS_IN = "";
+                List<Item> ITEMS_OUT = new List<Item>();
+                command.CommandText = get_query;
+                reader = command.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        if (int.Parse(reader.GetValue(0).ToString()) == ID)
+                        {
+                            AMOUNT = int.Parse(reader.GetValue(1).ToString());
+                            CAPACITY = int.Parse(reader.GetValue(2).ToString());
+                            ITEMS_IN = reader.GetValue(3).ToString();
+                            break;
+                        }
+                    }
+                }
+                string[] only_splitted_items = ITEMS_IN.Split(' ');
+                for(int i=0;i<AMOUNT ; ++i)
+                {
+                    string[] ITEM = only_splitted_items[i].Split('/');
+                    ITEMS_OUT.Add(new Item(int.Parse(ITEM[0]), int.Parse(ITEM[1])));
+                }
+                reader.Close();
+                return (AMOUNT, CAPACITY, ITEMS_OUT);
             }
         }
         
@@ -323,6 +358,7 @@ namespace BinPP //bin packing problem
                 Console.WriteLine(new String('-', 25));
             }
             Console.WriteLine($"Затраченное время (мс): {packing_type.GetTakenTime().ElapsedMilliseconds}");
+            db.AddCase(items_amnt, bin_capacity, items);
         }
     }
 }
