@@ -96,7 +96,7 @@
         public List<Bin> FFS()
         {
             Stopwatch sw_1 = Stopwatch.StartNew();
-            items.Sort((x, y) => x.Weight.CompareTo(y.Weight));
+            items.Sort((x, y) => y.Weight.CompareTo(x.Weight));
             List<Bin> ff = FF();
             sw_1.Stop();
             pack_results[2].TimeAmnt = sw_1.ElapsedTicks;

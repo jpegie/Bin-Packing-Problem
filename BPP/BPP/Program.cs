@@ -1,7 +1,6 @@
 ﻿global using System.Collections.Generic;
 global using System.Diagnostics;
 global using Microsoft.Data.Sqlite;
-global using Excel = Microsoft.Office.Interop.Excel;
 
 namespace BinPP //bin packing problem
 {
@@ -9,49 +8,6 @@ namespace BinPP //bin packing problem
     {
         //[0] - BF, [1] - FF, [2] - FFS
         public string path = @"C:\git\bin_packing_problem\tests_{0}_items";
-        class ExcelTable
-        { 
-            Excel.Application app;
-            Excel.Workbook wb;
-            Excel.Worksheet sheet;
-            string path;
-            public ExcelTable(string path)
-            {
-                app = new Excel.Application();
-                app.DisplayAlerts = true;
-                wb = app.Workbooks.Add(Type.Missing);
-                app.SheetsInNewWorkbook = 1;
-                sheet = (Excel.Worksheet)app.Worksheets[1];
-                this.path = path;
-
-                sheet.Cells[1, 1].Value = "Кол-во предметов";
-                sheet.Cells[1, 2].Value = "Номер теста";
-                sheet.Cells[1, 3].Value = "Решение BF";
-                sheet.Cells[1, 4].Value = "Время BF";
-                sheet.Cells[1, 5].Value = "Решение FF";
-                sheet.Cells[1, 6].Value = "Время FF";
-                sheet.Cells[1, 7].Value = "Решение FFS";
-                sheet.Cells[1, 8].Value = "Время FFS";
-
-            }
-            void AddTest(int items_amnt, int test_i, int bf_amnt, double bf_time, int ff_amnt, int ff_time, int ffs_amnt, double ffs_time)
-            {
-                //test_i - индекс строки, куда добавлять
-                //test_i > 0, а первая строка - шапка, поэтому + 2
-                sheet.Cells[test_i + 2, 1].Value = items_amnt;
-                sheet.Cells[test_i + 2, 2].Value = test_i;
-                sheet.Cells[test_i + 2, 3].Value = bf_amnt;
-                sheet.Cells[test_i + 2, 4].Value = bf_time;
-                sheet.Cells[test_i + 2, 5].Value = ff_amnt;
-                sheet.Cells[test_i + 2, 6].Value = ff_time;
-                sheet.Cells[test_i + 2, 7].Value = ffs_amnt;
-                sheet.Cells[test_i + 2, 8].Value = ffs_time;
-            }
-            public void SaveTable()
-            {
-                wb.SaveAs(path);
-            }
-        }
         class DataBase
         {
             static string connection_string = @"Data Source=C:\git\bin_packing_problem\db_input.db";
